@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+ * Le binaire affiche une bannière "Level00" puis demande un mot de passe.
+ * Il lit un entier au clavier (scanf "%d") et le compare à une valeur
+ * codée en dur (PASSWORD). Si l'entier saisi correspond, il affiche
+ * "Authenticated!" et ouvre un shell via system("/bin/sh") ; sinon il
+ * affiche "Invalid Password!" et quitte.
+ */
 #define PASSWORD 5276  /* 0x149c */
 
 int main(void)
@@ -10,13 +17,16 @@ int main(void)
     puts("***********************************");
     puts("* \t     -Level00 -\t\t  *");
     puts("***********************************");
+
     printf("Password:");
     scanf("%d", &input);
+
     if (input != PASSWORD)
     {
         puts("\nInvalid Password!");
         return 1;
     }
+
     puts("\nAuthenticated!");
     system("/bin/sh");
     return 0;

@@ -2,6 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+ * Le binaire simule un prompt de login admin. Il lit un nom d'utilisateur
+ * dans le tableau global a_user_name (fgets, max 0x100 octets) et le compare
+ * à "dat_wil" ; si le nom est faux, il quitte. Sinon il lit un mot de passe
+ * dans password[64] avec fgets(password, 100, ...) et vérifie qu'il vaut
+ * "admin". Le test du mot de passe (result == 0 || result != 0) est toujours
+ * vrai, donc le programme affiche "incorrect password" et return 1 quoi qu'il
+ * arrive : la voie normale ne mène jamais à un shell.
+ */
 char a_user_name[256];
 
 int verify_user_name(void)
@@ -25,6 +34,7 @@ int main(void)
 
     puts("********* ADMIN LOGIN PROMPT *********");
     printf("Enter Username: ");
+
     fgets(a_user_name, 0x100, stdin);
 
     result = verify_user_name();
@@ -37,10 +47,11 @@ int main(void)
     puts("Enter Password: ");
     fgets(password, 100, stdin);
     result = verify_user_pass(password);
+
     if (result == 0 || result != 0)
     {
         puts("nope, incorrect password...\n");
         return 1;
     }
     return 0;
-} // ya un buffer overflow sur le fgets on get 100 octets sur un buffer de 64
+}
