@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+/*
+ * Idee : decrypt() XOR un tableau de 16 octets chiffres avec une cle,
+ * puis compare le resultat a "Congratulations!".
+ * Si ca correspond -> system("/bin/sh").
+*/
+void clear_stdin(void)
+{
+    int c;
+    do {
+        c = getchar();
+        if ((char)c == '\n')
+            return;
+    } while ((char)c != EOF);
+}
+
+/* Lit un entier non signe saisi par l'utilisateur */
+unsigned int get_unum(void)
+{
+    unsigned int n = 0;
+    fflush(stdout);
+    scanf("%u", &n);     /* &DAT_080489c0 == "%u" */
+    clear_stdin();
+    return n;
+}
+
+/* Handler de timeout : exit() via syscall 0x80 (anti-bruteforce) */
+void prog_timeout(void)
+{
+    /* swi(0x80) -> appel systeme, ne revient pas */
+    exit(1);
+}
+
+int decrypt(unsigned char key)
+{
+    /* "Congratulations!" chiffre par XOR avec 0x12 */
+    unsigned char buf[17] = {
+        0x51, 0x7d, 0x7c, 0x75, 0x60, 0x73, 0x66, 0x67,
+        0x7e, 0x73, 0x66, 0x7b, 0x7d, 0x7c, 0x61, 0x33, 0x00
+    };
+    size_t len = strlen((char *)buf);   /* = 16 */
+
+    for (size_t i = 0; i < len; i++)
+        buf[i] ^= key;                  /* dechiffrement par XOR */
+
+    if (memcmp(buf, "Congratulations!", 17) == 0)
+        return system("/bin/sh");       /* succes : shell */
+    else
+        return puts("\nInvalid Password");
+}
+
+void test(int param_1, int param_2)
+{
+    /* La "cle" est la difference des deux valeurs.
+       Il faut qu'elle vaille 0x12 pour tomber sur le bon case
+       et dechiffrer correctement. */
+    int key = param_2 - param_1;
+
+    switch (key) {
+        case 1: case 2: case 3: case 4: case 5:
+        case 6: case 7: case 8: case 9:
+        case 0x10: case 0x11: case 0x12: case 0x13:
+        case 0x14: case 0x15:
+            decrypt((unsigned char)key);
+            break;
+        default:
+            decrypt((unsigned char)rand());   /* cle aleatoire => echec */
+            break;
+    }
+}
+
+int main(void)
+{
+    srand(time(NULL));
+
+    puts("***********************************");
+    puts("*\t\tlevel03\t\t**");
+    puts("***********************************");
+    printf("Password:");
+
+    int value = get_unum();
+    test(value, 0 /* deuxieme valeur a determiner */);
+
+    return 0;
+}
