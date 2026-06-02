@@ -6,16 +6,6 @@
  *   - chaque lettre MAJUSCULE ('A'–'Z') est convertie en minuscule (XOR 0x20) ;
  *   - une fois arrivé à la fin de la chaîne (indice == longueur), il affiche le
  *     tampon avec printf(buffer) SANS chaîne de format, puis quitte.
- *
- * La vulnérabilité est une FORMAT STRING : l'entrée utilisateur est passée
- * directement comme format à printf(). En injectant des spécificateurs (%x, %s,
- * %n, ...) on peut lire la pile et, surtout, écrire en mémoire arbitraire via
- * %n pour détourner l'exécution.
- *
- * Subtilité : la conversion majuscule -> minuscule s'applique AVANT l'affichage.
- * Si l'exploit nécessite des adresses contenant des octets correspondant à des
- * lettres majuscules, ceux-ci seraient altérés — il faut en tenir compte lors
- * de la construction du payload.
  */
 
 #include <stdio.h>
