@@ -1,6 +1,4 @@
 /*
- * level08 — "backup"
- * ------------------------------------------------------------------
  * Ce binaire est un petit utilitaire de sauvegarde. On lui passe en
  * argument le chemin d'un fichier ; il en fait une copie octet par
  * octet dans le sous-dossier ./backups/ et journalise l'opération
@@ -13,7 +11,6 @@
  *   4. construit le chemin de destination "./backups/<fichier>" ;
  *   5. recopie le contenu du source vers la destination, octet par octet ;
  *   6. écrit une ligne de log "Finished back up <fichier>".
- * ------------------------------------------------------------------
  */
 
 #include <stdio.h>
