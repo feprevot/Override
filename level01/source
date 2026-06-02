@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char a_user_name[256];  /* global — fgets lit jusqu'à 0x100 octets */
+char a_user_name[256];
 
 int verify_user_name(void)
 {
