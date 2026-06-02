@@ -4,10 +4,27 @@
 #include <time.h>
 
 /*
- * Idee : decrypt() XOR un tableau de 16 octets chiffres avec une cle,
- * puis compare le resultat a "Congratulations!".
- * Si ca correspond -> system("/bin/sh").
-*/
+ * Programme de verification de mot de passe numerique.
+ *
+ * Etapes :
+ *   1. Initialisation du generateur aleatoire avec srand(time(NULL)).
+ *   2. Lecture d un entier non signe saisi par l utilisateur (get_unum -> scanf("%u")).
+ *   3. Appel de test(valeur_saisie, constante_fixe) :
+ *        - calcule key = constante_fixe - valeur_saisie
+ *        - si key est dans un ensemble de valeurs autorisees (1..9, 0x10..0x15),
+ *          appel de decrypt(key) avec cette cle.
+ *        - sinon, appel de decrypt(rand()) -> cle aleatoire, echec quasi-certain.
+ *   4. decrypt() XOR le tableau chiffre {0x51, 0x7d, ...} octet par octet avec key,
+ *      puis compare le resultat a "Congratulations!" (memcmp).
+ *        - Si egal : system("/bin/sh") -> shell.
+ *        - Sinon  : puts("Invalid Password").
+ *
+ * La seule cle qui dechiffre correctement le tableau est 0x12 (18 en decimal).
+ * L exploit est purement arithmetique : il faut saisir la valeur telle que
+ * constante_fixe - valeur_saisie == 0x12, soit valeur_saisie = constante_fixe - 18.
+ * Il n y a ni overflow ni format string : la faille est une logique de validation faible
+ * (la "bonne" cle est dans la liste des cas autorises du switch).
+ */
 void clear_stdin(void)
 {
     int c;
