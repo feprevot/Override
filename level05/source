@@ -19,8 +19,10 @@ void main(void)
 
     fgets(buf, 100, stdin);
 
-    for (i = 0; ; i++) {
-        if (strlen(buf) <= i) {
+    for (i = 0; ; i++)
+    {
+        if (strlen(buf) <= i)
+        {
             printf(buf);      
             exit(0);
         }
