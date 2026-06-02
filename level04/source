@@ -43,11 +43,8 @@ void clear_stdin(void)
 {
     int c;
 
-    do {
-        c = getchar();
-        if ((char)c == '\n')
-            return;
-    } while ((char)c != EOF);
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
 }
 
 /* Gestionnaire de timeout : déclenche un syscall puis se termine. */
@@ -99,20 +96,21 @@ int main(void)
         gets(buffer);                       /* lecture de la saisie utilisateur */
     }
     else {
-        /* --- Processus père : surveille le fils --- */
-        do {
+        /* --- Processus père : surveille le fils ---
+         * On boucle tant que le fils n'exécute pas execve().
+         * (Les tests de bits de l'original correspondent aux macros
+         *  WIFEXITED / WIFSIGNALED : le fils s'est-il terminé ?)        */
+        while (syscall_num != SYS_EXECVE) {
             wait(&status);
 
-            /* Le fils s'est-il terminé (normalement ou par signal) ? */
-            if (((status & 0x7f) == 0) ||
-                ((char)(((status & 0x7f) + 1) >> 1) > 0)) {
+            if (WIFEXITED(status) || WIFSIGNALED(status)) {
                 puts("child is exiting...");
                 return 0;
             }
 
             /* Lit le numéro de syscall que le fils est en train d'exécuter. */
             syscall_num = ptrace(PTRACE_PEEKUSER, child, ORIG_EAX_OFFSET, 0);
-        } while (syscall_num != SYS_EXECVE);
+        }
 
         /* Le fils a tenté un execve() : on le refuse et on le tue. */
         puts("no exec() for you");
