@@ -66,9 +66,6 @@ int decrypt(unsigned char key)
 
 void test(int param_1, int param_2)
 {
-    /* La "cle" est la difference des deux valeurs.
-       Il faut qu'elle vaille 0x12 pour tomber sur le bon case
-       et dechiffrer correctement. */
     int key = param_2 - param_1;
 
     switch (key) {
@@ -94,7 +91,7 @@ int main(void)
     printf("Password:");
 
     int value = get_unum();
-    test(value, 0 /* deuxieme valeur a determiner */);
+    test(value, 0 /* A determiner*/);
 
     return 0;
 }
