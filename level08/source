@@ -1,0 +1,115 @@
+/*
+ * level08 — "backup"
+ * ------------------------------------------------------------------
+ * Ce binaire est un petit utilitaire de sauvegarde. On lui passe en
+ * argument le chemin d'un fichier ; il en fait une copie octet par
+ * octet dans le sous-dossier ./backups/ et journalise l'opération
+ * dans ./backups/.log.
+ *
+ * Déroulé :
+ *   1. ouvre (ou crée) le fichier de log ./backups/.log ;
+ *   2. écrit une première ligne de log "Starting back up: <fichier>" ;
+ *   3. ouvre le fichier source passé en argument ;
+ *   4. construit le chemin de destination "./backups/<fichier>" ;
+ *   5. recopie le contenu du source vers la destination, octet par octet ;
+ *   6. écrit une ligne de log "Finished back up <fichier>".
+ * ------------------------------------------------------------------
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#define LOG_PATH    "./backups/.log"
+#define BACKUP_DIR  "./backups/"
+
+/*
+ * Journalise un message dans le fichier de log.
+ *   stream : flux du fichier de log déjà ouvert
+ *   prefix : préfixe fixe ("Starting back up: ", "Finished back up ")
+ *   user   : chaîne contrôlée par l'utilisateur (le nom de fichier)
+ *
+ * Le buffer 'line' fait 264 octets ; snprintf borne l'écriture à
+ * 0xfe (254) octets restants. Mais 'user' est utilisé comme FORMAT,
+ * d'où la faille format string.
+ */
+void log_wrapper(FILE *stream, char *prefix, char *user)
+{
+    char line[264];
+    size_t len;
+
+    /* On commence par recopier le préfixe dans le buffer. */
+    strcpy(line, prefix);
+    len = strlen(line);
+
+    /*
+     * On concatène la partie utilisateur à la suite du préfixe.
+     * BUG : 'user' est passé comme chaîne de format à snprintf,
+     * au lieu de snprintf(line + len, 0xfe - len, "%s", user).
+     */
+    snprintf(line + len, 0xfe - len, user);
+
+    /* Supprime un éventuel retour à la ligne. */
+    line[strcspn(line, "\n")] = '\0';
+
+    fprintf(stream, "LOG: %s\n", line);
+}
+
+int main(int argc, char **argv)
+{
+    FILE *log_file;
+    FILE *src;
+    int   dst_fd;
+    int   c;
+    char  byte = -1;
+    char  dst_path[104];
+
+    if (argc != 2)
+        printf("Usage: %s filename\n", argv[0]);
+
+    /* 1. Ouvre le fichier de log en écriture. */
+    log_file = fopen(LOG_PATH, "w");
+    if (log_file == NULL) {
+        printf("ERROR: Failed to open %s\n", LOG_PATH);
+        exit(1);
+    }
+
+    /* 2. Première ligne de log (le nom de fichier est l'argument vulnérable). */
+    log_wrapper(log_file, "Starting back up: ", argv[1]);
+
+    /* 3. Ouvre le fichier source à sauvegarder. */
+    src = fopen(argv[1], "r");
+    if (src == NULL) {
+        printf("ERROR: Failed to open %s\n", argv[1]);
+        exit(1);
+    }
+
+    /* 4. Construit le chemin de destination : "./backups/<fichier>". */
+    strncpy(dst_path, BACKUP_DIR, sizeof(BACKUP_DIR)); /* "./backups/" + '\0' */
+    strncat(dst_path, argv[1], 99 - strlen(dst_path));
+
+    /* O_WRONLY|O_CREAT|O_EXCL (0xc1), mode 0660 (0x1b0). */
+    dst_fd = open(dst_path, O_WRONLY | O_CREAT | O_EXCL, 0660);
+    if (dst_fd < 0) {
+        printf("ERROR: Failed to open %s%s\n", BACKUP_DIR, argv[1]);
+        exit(1);
+    }
+
+    /* 5. Recopie octet par octet le source vers la destination. */
+    while (1) {
+        c = fgetc(src);
+        byte = (char)c;
+        if (byte == -1)          /* EOF */
+            break;
+        write(dst_fd, &byte, 1);
+    }
+
+    /* 6. Dernière ligne de log. */
+    log_wrapper(log_file, "Finished back up ", argv[1]);
+
+    fclose(src);
+    close(dst_fd);
+    return 0;
+}
