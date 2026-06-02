@@ -39,7 +39,8 @@ unsigned int get_unum(void)
  * Commande "store" : écrit un nombre dans data[index].
  *
  * Aucune borne supérieure sur `index` -> écriture arbitraire relative à `data`.
- * Seules restrictions : index non multiple de 3, et octet de poids fort du
+ * Seules restrictions : index non multiple de 3, et octet
+ de poids fort du
  * nombre différent de 0xb7.
  *
  * Renvoie 0 en cas de succès, 1 si l'écriture est refusée.
@@ -126,20 +127,20 @@ int main(int argc, char **argv, char **envp)
         "   wil has reserved some storage :>                 \n"
         "----------------------------------------------------\n");
 
-    for (;;) {
+    for (;;)
+    {
         printf("Input command: ");
         status = 1;
 
         fgets(command, sizeof(command), stdin);
         command[strcspn(command, "\n")] = '\0';   /* retire le '\n' final */
 
-        if (strncmp(command, "store", 5) == 0) {
+        if (strncmp(command, "store", 5) == 0)
             status = store_number(data);
-        } else if (strncmp(command, "read", 4) == 0) {
+        else if (strncmp(command, "read", 4) == 0)
             status = read_number(data);
-        } else if (strncmp(command, "quit", 4) == 0) {
+        else if (strncmp(command, "quit", 4) == 0)
             return 0;   /* sortie propre (le canari de pile est vérifié ici) */
-        }
 
         if (status == 0)
             printf(" Completed %s command successfully\n", command);
