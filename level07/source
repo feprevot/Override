@@ -1,0 +1,151 @@
+/*
+ * Le programme est un petit service de stockage de nombres en mémoire. Il
+ * propose une boucle de commandes (store / read / quit) agissant sur un tableau
+ * `data` de 100 entiers situé sur la pile de main().
+ *
+ *   - store : demande un nombre puis un index, et écrit data[index] = nombre.
+ *   - read  : demande un index et affiche data[index].
+ *   - quit  : sort proprement (vérifie le canari de pile).
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* Vide ce qui reste sur stdin jusqu'au '\n' ou EOF. */
+void clear_stdin(void)
+{
+    int c;
+
+    do {
+        c = getchar();
+        if ((char)c == '\n')
+            return;
+    } while ((char)c != EOF);
+}
+
+/* Lit un entier non signé saisi par l'utilisateur, puis nettoie stdin. */
+unsigned int get_unum(void)
+{
+    unsigned int n = 0;
+
+    fflush(stdout);
+    scanf("%u", &n);
+    clear_stdin();
+    return n;
+}
+
+/*
+ * Commande "store" : écrit un nombre dans data[index].
+ *
+ * Aucune borne supérieure sur `index` -> écriture arbitraire relative à `data`.
+ * Seules restrictions : index non multiple de 3, et octet de poids fort du
+ * nombre différent de 0xb7.
+ *
+ * Renvoie 0 en cas de succès, 1 si l'écriture est refusée.
+ */
+int store_number(unsigned int *data)
+{
+    unsigned int number;
+    unsigned int index;
+
+    printf(" Number: ");
+    number = get_unum();
+
+    printf(" Index: ");
+    index = get_unum();
+
+    if ((index % 3 == 0) || (number >> 24 == 0xb7)) {
+        puts(" *** ERROR! ***");
+        puts("   This index is reserved for wil!");
+        puts(" *** ERROR! ***");
+        return 1;
+    }
+
+    data[index] = number;   /* index non borné -> écriture arbitraire */
+    return 0;
+}
+
+/*
+ * Commande "read" : affiche data[index].
+ * Aucune contrainte ni borne -> lecture arbitraire (utile pour leaker
+ * des adresses, p. ex. une entrée de la GOT).
+ */
+int read_number(unsigned int *data)
+{
+    unsigned int index;
+
+    printf(" Index: ");
+    index = get_unum();
+    printf(" Number at data[%u] is %u\n", index, data[index]);
+    return 0;
+}
+
+/*
+ * Handler d'expiration (timeout) : exécute un appel système brut puis saute
+ * vers l'adresse renvoyée. Pas impliqué dans l'exploitation, présent dans le
+ * binaire d'origine.
+ */
+void prog_timeout(void)
+{
+    void (*handler)(void);
+
+    handler = (void (*)(void))syscall(0x80);
+    handler();
+}
+
+int main(int argc, char **argv, char **envp)
+{
+    unsigned int data[100];   /* le "stockage" : 100 entiers sur la pile      */
+    char command[20];         /* ligne de commande lue via fgets              */
+    int status;               /* code retour de la dernière commande          */
+    char **p;
+
+    /* Tableau de stockage initialisé à zéro. */
+    memset(data, 0, sizeof(data));
+
+    /*
+     * On efface tout argv et tout envp : chaque chaîne est remise à zéro.
+     * But : interdire de glisser un shellcode dans les arguments ou
+     * l'environnement du processus.
+     */
+    for (p = argv; *p != NULL; p++)
+        memset(*p, 0, strlen(*p));
+    for (p = envp; *p != NULL; p++)
+        memset(*p, 0, strlen(*p));
+
+    puts(
+        "----------------------------------------------------\n"
+        "  Welcome to wil's crappy number storage service!   \n"
+        "----------------------------------------------------\n"
+        " Commands:                                          \n"
+        "    store - store a number into the data storage    \n"
+        "    read  - read a number from the data storage     \n"
+        "    quit  - exit the program                        \n"
+        "----------------------------------------------------\n"
+        "   wil has reserved some storage :>                 \n"
+        "----------------------------------------------------\n");
+
+    for (;;) {
+        printf("Input command: ");
+        status = 1;
+
+        fgets(command, sizeof(command), stdin);
+        command[strcspn(command, "\n")] = '\0';   /* retire le '\n' final */
+
+        if (strncmp(command, "store", 5) == 0) {
+            status = store_number(data);
+        } else if (strncmp(command, "read", 4) == 0) {
+            status = read_number(data);
+        } else if (strncmp(command, "quit", 4) == 0) {
+            return 0;   /* sortie propre (le canari de pile est vérifié ici) */
+        }
+
+        if (status == 0)
+            printf(" Completed %s command successfully\n", command);
+        else
+            printf(" Failed to do %s command\n", command);
+
+        memset(command, 0, sizeof(command));
+    }
+}
