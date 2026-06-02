@@ -94,7 +94,8 @@ int auth(char *login, unsigned int serial)
     /* Hachage maison initialisé avec le 4e caractère du login. */
     hash = ((int)login[3] ^ 0x1337U) + 0x5eeded;
 
-    for (i = 0; i < (int)len; i++) {
+    for (i = 0; i < (int)len; i++)
+    {
         /* Tout caractère de contrôle invalide la saisie. */
         if (login[i] < ' ')
             return 1;
