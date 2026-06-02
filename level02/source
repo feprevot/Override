@@ -2,6 +2,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+ * Prompt de login "Secure Access System v1.0".
+ *
+ * Etapes :
+ *   1. Ouverture de /home/users/level03/.pass (autorisee car le binaire est setuid level03).
+ *   2. Lecture de 41 octets dans pass_file, puis suppression du '\n' final.
+ *   3. Saisie d un username et d un password via fgets (bornes a 100 octets, pas d overflow).
+ *   4. Comparaison du password saisi avec le contenu du fichier via strncmp.
+ *      - Si egal : printf("Greetings, %s!", username) puis system("/bin/sh").
+ *      - Si different : printf(username) (sans format string) puis exit(1).
+ *
+ * La branche "egal" suppose qu on connaisse deja le flag → inutilisable telle quelle.
+ * La vraie faille est le printf(username) de la branche d echec :
+ * format string vulnerability exploitable avec %x, %s, %n, etc.
+ */
+
 int main(void)
 {
     char    username[100];
@@ -15,7 +31,8 @@ int main(void)
     memset(password,  0, sizeof(password));
 
     fp = fopen("/home/users/level03/.pass", "r");
-    if (fp == NULL) {
+    if (fp == NULL)
+    {
         fwrite("ERROR: failed to open password file\n", 1, 36, stderr);
         exit(1);
     }
@@ -23,7 +40,8 @@ int main(void)
     bytes_read = (int)fread(pass_file, 1, 41, fp);
     pass_file[strcspn(pass_file, "\n")] = '\0';
 
-    if (bytes_read != 41) {
+    if (bytes_read != 41)
+    {
         fwrite("ERROR: failed to read password file\n", 1, 36, stderr);
         fwrite("ERROR: failed to read password file\n", 1, 36, stderr);
         exit(1);
@@ -45,13 +63,14 @@ int main(void)
 
     puts("*****************************************");
 
-    if (strncmp(pass_file, password, 41) == 0) {
+    if (strncmp(pass_file, password, 41) == 0)
+    {
         printf("Greetings, %s!\n", username);
         system("/bin/sh");
         return 0;
     }
 
-    printf(username); // format string vulnerability : username utilisé directement comme format
+    printf(username);
     puts(" does not have access!");
     exit(1);
 }
