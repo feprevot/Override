@@ -40,7 +40,23 @@ Cet offset `0x24` = 36 octets est crucial pour les calculs.
 
 ## Étape 2 : Calculer l'index exact de l'adresse de retour
 
-Lance `gdb` et pose un breakpoint juste après le prologue.
+### Qu'est-ce que le prologue ?
+
+Le **prologue** d'une fonction, c'est les instructions au début qui :
+- Sauvegardent l'ancienne pile (`push ebp`)
+- Réservent de la place pour les variables locales (`sub esp, 0x1d0`)
+
+Exemple :
+```asm
+push ebp
+mov ebp, esp
+and esp, 0xfffffff0
+sub esp, 0x1d0    ← fin du prologue
+```
+
+On veut mettre le breakpoint **juste après** (quand toutes ces instructions sont exécutées) pour que la pile soit stable.
+
+### Lancer gdb
 
 ```bash
 gdb -q ./level07
@@ -50,12 +66,14 @@ Dans gdb :
 
 ```gdb
 # Breakpoint à l'adresse juste après "sub esp, 0x1d0"
-# (cherche dans le disas : 0x0804874d pour ce binaire)
+# (0x0804874d pour ce binaire, cherche la première instruction APRÈS le "sub esp")
 b *0x0804874d
 run
 ```
 
-La formule pour calculer l'index de l'adresse de retour :
+### Formule pour calculer l'index
+
+Une fois le breakpoint atteint, tape :
 
 $$\text{index\_ret} = \frac{(\text{ebp}+4) - (\text{esp}+0x24)}{4}$$
 
@@ -70,14 +88,45 @@ p/d (($ebp+4)-($esp+0x24))/4
 
 **Résultat attendu** : `$1 = 114`
 
-Vérifie en lisant :
+### Vérification (optionnel)
+
+Pour vérifier que tu as bien trouvé l'adresse de retour, tu peux lire cet index :
 
 ```gdb
 read
-119  # l'offset du premier mot (0x24) = 36 octets / 4 = 9 ; 114 + 5 = 119
+114
 ```
 
-Tu dois voir une adresse libc (ex. `0xf7e45513`).
+Tu dois voir une grosse adresse (commence par `0xf7...` = adresse libc).
+
+### Alternative : trouver l'index par scan empirique (sans formule)
+
+Si la formule GDB te semble trop complexe, tu peux trouver l'index directement dans le programme sans faire de calcul.
+
+**Principe** : la return address est une adresse libc (`0xf7xxxxxxxx` en hexa, soit un grand nombre `> 4 000 000 000` en décimal). Mais attention — **elle n'est pas forcément la seule** dans cette zone : des registres callee-saved comme `EBX` peuvent aussi contenir des adresses libc (ex. `data[110]` = `0xF7FCEFF4` dans notre cas, mais c'était EBX, pas l'EIP).
+
+Lance le programme et lis les indices un par un autour de 110–120 :
+
+```text
+read → 110
+read → 112
+read → 113
+read → 114
+```
+
+Plusieurs valeurs peuvent ressembler à des adresses libc. **Le scan seul ne suffit pas** — il faut confirmer avec le test de crash ci-dessous.
+
+**Confirmation** : pour chaque candidat, écris `1` à cet index et tape `quit`. Si le programme affiche `Segmentation fault` → c'est la return address. Si le programme quitte proprement → c'est autre chose (un registre sauvegardé, etc.).
+
+```text
+store
+1
+<index_suspect>
+
+quit
+```
+
+> **Note** : l'index trouvé par cette méthode peut différer de 114 selon l'environnement d'exécution (GDB ajoute des variables d'environnement qui décalent la pile). La valeur exacte de l'index dépend de la session. Ce qui ne change pas : le bypass 32-bit (ajouter `2^30 = 1073741824` si l'index est multiple de 3).
 
 ---
 

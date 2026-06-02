@@ -68,7 +68,8 @@ int main(int argc, char **argv)
 
     /* 1. Ouvre le fichier de log en écriture. */
     log_file = fopen(LOG_PATH, "w");
-    if (log_file == NULL) {
+    if (log_file == NULL)
+    {
         printf("ERROR: Failed to open %s\n", LOG_PATH);
         exit(1);
     }
@@ -78,7 +79,8 @@ int main(int argc, char **argv)
 
     /* 3. Ouvre le fichier source à sauvegarder. */
     src = fopen(argv[1], "r");
-    if (src == NULL) {
+    if (src == NULL)
+    {
         printf("ERROR: Failed to open %s\n", argv[1]);
         exit(1);
     }
@@ -89,13 +91,15 @@ int main(int argc, char **argv)
 
     /* O_WRONLY|O_CREAT|O_EXCL (0xc1), mode 0660 (0x1b0). */
     dst_fd = open(dst_path, O_WRONLY | O_CREAT | O_EXCL, 0660);
-    if (dst_fd < 0) {
+    if (dst_fd < 0)
+    {
         printf("ERROR: Failed to open %s%s\n", BACKUP_DIR, argv[1]);
         exit(1);
     }
 
     /* 5. Recopie octet par octet le source vers la destination. */
-    while (1) {
+    while (1)
+    {
         c = fgetc(src);
         byte = (char)c;
         if (byte == -1)          /* EOF */
