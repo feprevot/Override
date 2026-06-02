@@ -1,20 +1,23 @@
+#include <stdio.h>
+#include <stdlib.h>
 
-bool main(void)
+#define PASSWORD 5276  /* 0x149c */
 
+int main(void)
 {
-    int local_14 [4];
-    
+    int input;
+
     puts("***********************************");
     puts("* \t     -Level00 -\t\t  *");
     puts("***********************************");
     printf("Password:");
-    __isoc99_scanf(&DAT_08048636,local_14);
-    if (local_14[0] != 0x149c) {
-         puts("\nInvalid Password!");
+    scanf("%d", &input);
+    if (input != PASSWORD)
+    {
+        puts("\nInvalid Password!");
+        return 1;
     }
-    else {
-         puts("\nAuthenticated!");
-         system("/bin/sh");
-    }
-    return local_14[0] != 0x149c;
+    puts("\nAuthenticated!");
+    system("/bin/sh");
+    return 0;
 }
