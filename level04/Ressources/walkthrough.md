@@ -124,13 +124,6 @@ EOF
 python /tmp/exploit.py | ./level04
 ```
 
-Resultat : `3v8QLcN5SAhPaZZfEasfmXdwyR59ktDEMAwHF3aN`
 
 ---
 
-## 7. Passer au niveau suivant
-
-```bash
-su level05
-# Password: 3v8QLcN5SAhPaZZfEasfmXdwyR59ktDEMAwHF3aN
-```
