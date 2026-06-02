@@ -1,0 +1,123 @@
+/*
+ * level04 — version C lisible du binaire
+ *
+ * Déroulé du programme :
+ *   1. Le processus installe un délai (alarm de 60 s) : passé ce temps,
+ *      un gestionnaire de signal exécute un syscall et termine le programme.
+ *   2. Il se duplique avec fork() :
+ *        - Le PROCESSUS FILS se protège (prctl + ptrace TRACEME pour se faire
+ *          tracer par le père), demande une saisie à l'utilisateur
+ *          ("Give me some shellcode, k") puis lit cette saisie.
+ *        - Le PROCESSUS PÈRE surveille le fils via ptrace.
+ *   3. Le père attend (wait) que le fils change d'état :
+ *        - si le fils se termine normalement, il affiche "child is exiting..."
+ *          et quitte ;
+ *        - sinon, il inspecte le registre du fils contenant le numéro de
+ *          l'appel système en cours. Si le fils tente un execve() (syscall 11),
+ *          le père refuse ("no exec() for you") et tue le fils.
+ *
+ * Autrement dit : le binaire lit une entrée fournie par l'utilisateur dans le
+ * processus fils, pendant que le père agit comme un "garde" qui empêche toute
+ * tentative d'exécuter un nouveau programme (execve) depuis le fils.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/ptrace.h>
+#include <sys/prctl.h>
+
+/* Numéro du syscall execve sur architecture x86 (32 bits). */
+#define SYS_EXECVE        11
+/* Offset du registre orig_eax (numéro de syscall) dans la zone USER. */
+#define ORIG_EAX_OFFSET   0x2c
+/* Signal SIGALRM. */
+#define SIG_ALARM         14
+
+/* Vide ce qui reste sur l'entrée standard jusqu'au '\n' ou EOF. */
+void clear_stdin(void)
+{
+    int c;
+
+    do {
+        c = getchar();
+        if ((char)c == '\n')
+            return;
+    } while ((char)c != EOF);
+}
+
+/* Gestionnaire de timeout : déclenche un syscall puis se termine. */
+void prog_timeout(void)
+{
+    void (*handler)(void);
+
+    handler = (void (*)(void))syscall(0x80);
+    handler();
+}
+
+/* Arme une alarme de 60 secondes reliée au gestionnaire prog_timeout. */
+void enable_timeout_cons(void)
+{
+    signal(SIG_ALARM, (void (*)(int))prog_timeout);
+    alarm(60);
+}
+
+/* Lit un entier non signé saisi par l'utilisateur. */
+unsigned int get_unum(void)
+{
+    unsigned int num = 0;
+
+    fflush(stdout);
+    scanf("%u", &num);
+    clear_stdin();
+    return num;
+}
+
+int main(void)
+{
+    char     buffer[128];   /* tampon de saisie du fils */
+    int      status;        /* statut récupéré par wait() */
+    long     syscall_num;   /* numéro de syscall lu chez le fils */
+    pid_t    child;
+
+    /* Initialisation explicite du tampon à zéro (32 mots de 4 octets). */
+    memset(buffer, 0, sizeof(buffer));
+    status = 0;
+    syscall_num = 0;
+
+    child = fork();
+
+    if (child == 0) {
+        /* --- Processus fils --- */
+        prctl(PR_SET_DUMPABLE, 1);          /* (1, 1) dans l'original */
+        ptrace(PTRACE_TRACEME, 0, 0, 0);    /* se faire tracer par le père */
+        puts("Give me some shellcode, k");
+        gets(buffer);                       /* lecture de la saisie utilisateur */
+    }
+    else {
+        /* --- Processus père : surveille le fils --- */
+        do {
+            wait(&status);
+
+            /* Le fils s'est-il terminé (normalement ou par signal) ? */
+            if (((status & 0x7f) == 0) ||
+                ((char)(((status & 0x7f) + 1) >> 1) > 0)) {
+                puts("child is exiting...");
+                return 0;
+            }
+
+            /* Lit le numéro de syscall que le fils est en train d'exécuter. */
+            syscall_num = ptrace(PTRACE_PEEKUSER, child, ORIG_EAX_OFFSET, 0);
+        } while (syscall_num != SYS_EXECVE);
+
+        /* Le fils a tenté un execve() : on le refuse et on le tue. */
+        puts("no exec() for you");
+        kill(child, 9);
+    }
+
+    return 0;
+}
