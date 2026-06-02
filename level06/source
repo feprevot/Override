@@ -1,0 +1,135 @@
+/*
+ * Le programme demande un "Login" (chaîne) puis un "Serial" (entier non signé).
+ * La fonction auth() recalcule, à partir du login, la valeur entière attendue
+ * pour le serial via un petit algorithme de hachage maison :
+ *
+ *     hash = (login[3] ^ 0x1337) + 0x5eeded;
+ *     pour chaque caractère c du login :
+ *         hash += (c ^ hash) % 0x539;     // 0x539 = 1337
+ *
+ * Si le serial saisi est EXACTEMENT égal à ce hash, l'authentification réussit
+ * et un shell (/bin/sh) est lancé avec les privilèges du binaire (setuid level07).
+ *
+ * Contraintes / pièges :
+ *   - le login doit faire au moins 6 caractères (strnlen, max 32) ;
+ *   - login[3] est utilisé pour initialiser le hash, donc le login doit avoir
+ *     au moins 4 caractères significatifs ;
+ *   - tout caractère < ' ' (0x20) dans le login fait échouer la vérification ;
+ *   - anti-debug : ptrace(PTRACE_TRACEME) ; si le process est déjà tracé
+ *     (gdb/strace), ptrace renvoie -1 et le programme affiche "TAMPERING DETECTED" ;
+ *   - alarme de 60 s (signal SIGALRM -> prog_timeout) côté binaire d'origine.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/ptrace.h>
+
+/* Vide ce qui reste sur stdin jusqu'au '\n' (ou EOF). */
+void clear_stdin(void)
+{
+    int c;
+
+    do {
+        c = getchar();
+        if ((char)c == '\n')
+            return;
+    } while ((char)c != EOF);
+}
+
+/* Lit un entier non signé sur stdin et le renvoie. */
+unsigned int get_unum(void)
+{
+    unsigned int n = 0;
+
+    fflush(stdout);
+    scanf("%u", &n);
+    clear_stdin();
+    return n;
+}
+
+/* Handler de timeout : exécute l'appel système indiqué (exit). */
+void prog_timeout(int signum)
+{
+    (void)signum;
+    /* Dans le binaire d'origine : appel système direct via int 0x80 (exit). */
+    _exit(1);
+}
+
+/* Arme un timeout de 60 secondes sur le programme. */
+void enable_timeout_cons(void)
+{
+    signal(SIGALRM, prog_timeout);   /* 0xe = 14 = SIGALRM */
+    alarm(60);                       /* 0x3c = 60 */
+}
+
+/*
+ * Vérifie le couple (login, serial).
+ * Renvoie 0 si le serial est valide, 1 sinon.
+ */
+int auth(char *login, unsigned int serial)
+{
+    size_t len;
+    unsigned int hash;
+    int i;
+
+    /* Supprime un éventuel '\n' en coupant la chaîne dessus. */
+    login[strcspn(login, "\n")] = '\0';
+
+    /* Le login doit faire au moins 6 caractères (longueur bornée à 32). */
+    len = strnlen(login, 0x20);
+    if ((int)len < 6)
+        return 1;
+
+    /* Anti-debug : refuse de s'exécuter sous traceur. */
+    if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) == -1) {
+        puts("\x1b[32m.---------------------------.");
+        puts("\x1b[31m| !! TAMPERING DETECTED !!  |");
+        puts("\x1b[32m'---------------------------'");
+        return 1;
+    }
+
+    /* Hachage maison initialisé avec le 4e caractère du login. */
+    hash = ((int)login[3] ^ 0x1337U) + 0x5eeded;
+
+    for (i = 0; i < (int)len; i++) {
+        /* Tout caractère de contrôle invalide la saisie. */
+        if (login[i] < ' ')
+            return 1;
+        hash += ((int)login[i] ^ hash) % 0x539;   /* 0x539 = 1337 */
+    }
+
+    /* Succès si le serial fourni correspond au hash calculé. */
+    return (serial == hash) ? 0 : 1;
+}
+
+int main(void)
+{
+    char login[32];
+    unsigned int serial;
+    int ret;
+
+    puts("***********************************");
+    puts("*\t\tlevel06\t\t  *");
+    puts("***********************************");
+
+    printf("-> Enter Login: ");
+    fgets(login, 0x20, stdin);
+
+    puts("***********************************");
+    puts("***** NEW ACCOUNT DETECTED ********");
+    puts("***********************************");
+
+    printf("-> Enter Serial: ");
+    serial = get_unum();
+
+    ret = auth(login, serial);
+    if (ret == 0) {
+        puts("Authenticated!");
+        system("/bin/sh");   /* shell avec les droits du binaire (level07) */
+    }
+
+    return ret != 0;
+}
