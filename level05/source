@@ -1,0 +1,42 @@
+/*
+ * level05 — comportement du binaire
+ * --------------------------------
+ * Le programme lit une ligne de l'entrée standard (au plus 100 octets) dans un
+ * tampon local, puis parcourt cette chaîne caractère par caractère :
+ *   - chaque lettre MAJUSCULE ('A'–'Z') est convertie en minuscule (XOR 0x20) ;
+ *   - une fois arrivé à la fin de la chaîne (indice == longueur), il affiche le
+ *     tampon avec printf(buffer) SANS chaîne de format, puis quitte.
+ *
+ * La vulnérabilité est une FORMAT STRING : l'entrée utilisateur est passée
+ * directement comme format à printf(). En injectant des spécificateurs (%x, %s,
+ * %n, ...) on peut lire la pile et, surtout, écrire en mémoire arbitraire via
+ * %n pour détourner l'exécution.
+ *
+ * Subtilité : la conversion majuscule -> minuscule s'applique AVANT l'affichage.
+ * Si l'exploit nécessite des adresses contenant des octets correspondant à des
+ * lettres majuscules, ceux-ci seraient altérés — il faut en tenir compte lors
+ * de la construction du payload.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void main(void)
+{
+    char buf[100];
+    unsigned int i;
+
+    fgets(buf, 100, stdin);
+
+    for (i = 0; ; i++) {
+        if (strlen(buf) <= i) {
+            printf(buf);      
+            exit(0);
+        }
+
+        /* si buf[i] est une majuscule ('A'..'Z'), la passer en minuscule */
+        if (buf[i] > '@' && buf[i] < '[')
+            buf[i] ^= 0x20;
+    }
+}
