@@ -18,12 +18,6 @@
  *      puis compare le resultat a "Congratulations!" (memcmp).
  *        - Si egal : system("/bin/sh") -> shell.
  *        - Sinon  : puts("Invalid Password").
- *
- * La seule cle qui dechiffre correctement le tableau est 0x12 (18 en decimal).
- * L exploit est purement arithmetique : il faut saisir la valeur telle que
- * constante_fixe - valeur_saisie == 0x12, soit valeur_saisie = constante_fixe - 18.
- * Il n y a ni overflow ni format string : la faille est une logique de validation faible
- * (la "bonne" cle est dans la liste des cas autorises du switch).
  */
 void clear_stdin(void)
 {
