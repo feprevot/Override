@@ -135,35 +135,31 @@ En little-endian sur 8 octets : `\x8c\x48\x55\x55\x55\x55\x00\x00`
 
 ---
 
-## Trouver l'offset sans calcul mental — méthode GDB directe
+## Trouver l'offset — méthode fiable
 
-Le calcul théorique (taille de struct + padding compilateur) est piégeux car le compilateur
-peut ajouter des octets d'alignement invisibles dans le source. La méthode fiable est de
-laisser GDB calculer la distance directement sur les registres.
+Le calcul théorique depuis le source est piégeux : le compilateur peut insérer du padding
+invisible entre la struct et le saved RBP. La méthode fiable consiste à lire directement
+le `disas` de la fonction cible.
 
-**1. Repérer l'allocation de la stack frame dans le disassembly :**
+**1. Repérer l'allocation dans le prologue :**
 ```
 disas handle_msg
-# chercher : sub $0xc0, %rsp  → m.msg[0] est à rbp - 0xc0
+# chercher : sub $0xc0, %rsp
 ```
 
-**2. Poser un breakpoint sur le `retq` de `handle_msg` et lancer normalement :**
+**2. Appliquer la règle (64 bits) :**
 ```
-(gdb) break *0x555555554931
-(gdb) run
-```
-(taper n'importe quoi aux deux prompts pour atteindre le breakpoint)
-
-**3. Calculer l'offset exact en une commande :**
-```
-(gdb) p $rsp - ($rbp - 0xc0)
+offset = allocation + 8 (saved RBP)
+offset = 0xc0 + 8 = 192 + 8 = 200
 ```
 
-- `$rsp` au moment du `retq` = adresse où est stockée la return address
-- `$rbp - 0xc0` = adresse de `m.msg[0]`
-- La différence = offset exact, ici **200**
+Le `+8` est constant en 64 bits : c'est toujours le saved RBP qui précède la return address.
+Le `0xc0` vient du `sub` dans le prologue et inclut déjà le padding compilateur — pas besoin
+de le calculer soi-même depuis les tailles de champs.
 
-C'est ce qui révèle les 8 octets de padding compilateur qu'on ne voit pas dans le source.
+> **Pourquoi pas depuis le source ?** Le compilateur a alloué `0xc0 = 192` octets alors que
+> la struct ne fait que `140 + 40 + 4 = 184` octets. Les 8 octets de différence sont du
+> padding d'alignement invisible dans le code C.
 
 ---
 
