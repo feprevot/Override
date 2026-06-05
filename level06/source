@@ -54,15 +54,14 @@ unsigned int get_unum(void)
 void prog_timeout(int signum)
 {
     (void)signum;
-    /* Dans le binaire d'origine : appel système direct via int 0x80 (exit). */
     _exit(1);
 }
 
 /* Arme un timeout de 60 secondes sur le programme. */
 void enable_timeout_cons(void)
 {
-    signal(SIGALRM, prog_timeout);   /* 0xe = 14 = SIGALRM */
-    alarm(60);                       /* 0x3c = 60 */
+    signal(SIGALRM, prog_timeout);
+    alarm(60);
 }
 
 /*

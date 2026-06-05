@@ -60,15 +60,6 @@ cat /tmp/backups/home/users/level09/.pass
 
 ---
 
-## Étape 5 : Passer au niveau suivant
-
-```bash
-su level09
-# Colle le mot de passe récupéré
-```
-
----
-
 ## Résumé des commandes
 
 ```bash

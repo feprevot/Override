@@ -1,6 +1,4 @@
 /*
- * level05 — comportement du binaire
- * --------------------------------
  * Le programme lit une ligne de l'entrée standard (au plus 100 octets) dans un
  * tampon local, puis parcourt cette chaîne caractère par caractère :
  *   - chaque lettre MAJUSCULE ('A'–'Z') est convertie en minuscule (XOR 0x20) ;

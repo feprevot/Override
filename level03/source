@@ -34,7 +34,7 @@ unsigned int get_unum(void)
 {
     unsigned int n = 0;
     fflush(stdout);
-    scanf("%u", &n);     /* &DAT_080489c0 == "%u" */
+    scanf("%u", &n);
     clear_stdin();
     return n;
 }
@@ -42,7 +42,6 @@ unsigned int get_unum(void)
 /* Handler de timeout : exit() via syscall 0x80 (anti-bruteforce) */
 void prog_timeout(void)
 {
-    /* swi(0x80) -> appel systeme, ne revient pas */
     exit(1);
 }
 
@@ -76,7 +75,7 @@ void test(int param_1, int param_2)
             decrypt((unsigned char)key);
             break;
         default:
-            decrypt((unsigned char)rand());   /* cle aleatoire => echec */
+            decrypt((unsigned char)rand());
             break;
     }
 }

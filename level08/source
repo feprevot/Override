@@ -89,7 +89,6 @@ int main(int argc, char **argv)
     strncpy(dst_path, BACKUP_DIR, sizeof(BACKUP_DIR)); /* "./backups/" + '\0' */
     strncat(dst_path, argv[1], 99 - strlen(dst_path));
 
-    /* O_WRONLY|O_CREAT|O_EXCL (0xc1), mode 0660 (0x1b0). */
     dst_fd = open(dst_path, O_WRONLY | O_CREAT | O_EXCL, 0660);
     if (dst_fd < 0)
     {
@@ -102,12 +101,11 @@ int main(int argc, char **argv)
     {
         c = fgetc(src);
         byte = (char)c;
-        if (byte == -1)          /* EOF */
+        if (byte == -1)
             break;
         write(dst_fd, &byte, 1);
     }
 
-    /* 6. Dernière ligne de log. */
     log_wrapper(log_file, "Finished back up ", argv[1]);
 
     fclose(src);

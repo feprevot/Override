@@ -1,6 +1,4 @@
 /*
- * level09 — "l33t-m$n v1337"
- *
  * Ce binaire simule une petite messagerie. Il demande d'abord un nom
  * d'utilisateur, puis un message à envoyer "@Unix-Dude". Toutes ces données
  * sont stockées dans une seule structure en mémoire (sur la pile) qui regroupe
@@ -30,9 +28,9 @@
  *   - msg_len  à l'offset 0xb4 : nombre d'octets recopiés dans le message
  */
 struct message {
-    char msg[140];      /* 0x00 */
-    char username[40];  /* 0x8c */
-    int  msg_len;       /* 0xb4 */
+    char msg[140];
+    char username[40];
+    int  msg_len;
 };
 
 /* Lit le nom d'utilisateur et le copie dans la structure. */
@@ -81,8 +79,6 @@ void handle_msg(void)
 {
     struct message m;
 
-    /* Valeurs par défaut : zone username/msg_len mise à zéro, */
-    /* puis longueur de copie initialisée à 0x8c (140).         */
     memset(m.username, 0, sizeof(m.username));
     m.msg_len = 0x8c;
 

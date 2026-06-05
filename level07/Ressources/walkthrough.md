@@ -195,8 +195,8 @@ Mais `4294967752` est énorme et dépasse le max 32-bit (`4294967296`). Ça wrap
 
 Le filtre check `index % 3` (pas la multiplication) :
 
-- `114 % 3 = 0` ❌ refusé
-- `1073741938 % 3 = 1` ✅ accepté
+- `114 % 3 = 0`  refusé
+- `1073741938 % 3 = 1`  accepté
 
 Mais comme les deux indices pointent au même endroit (wrappe 32-bit), on écrit à l'endroit interdit sans déclencher l'alerte.
 
@@ -231,15 +231,7 @@ quit
 - **Second `store`** : écrit `"/bin/sh"` à `data[116]` (l'argument pour `system()`)
 - **`quit`** : `main()` retourne → saute vers `system()` → lit l'argument à `data[116]` → `/bin/sh` → shell
 
-Tu dois obtenir un shell `level08` :
-
-```bash
-whoami
-# level08
-
-cat /home/users/level08/.pass
-# Affiche le flag pour level08
-```
+Tu dois obtenir un shell `level08`
 
 ---
 
@@ -276,17 +268,3 @@ store
 116
 
 quit
-
-# 4. Récupérer le flag
-whoami
-cat /home/users/level08/.pass
-```
-
----
-
-## Points clés
-
-- **Index RET = 114** : calculé via `(ebp+4) - (esp+0x24)) / 4`
-- **Bypass modulo-3** : utiliser `114 + 2^30 = 1073741938`
-- **Stack-based ROP** : pas de shellcode, juste un appel function + argument
-- **ASLR** : les adresses libc changent à chaque redémarrage ; toujours faire gdb + exploit dans la même session

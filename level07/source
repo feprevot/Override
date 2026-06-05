@@ -140,7 +140,7 @@ int main(int argc, char **argv, char **envp)
         else if (strncmp(command, "read", 4) == 0)
             status = read_number(data);
         else if (strncmp(command, "quit", 4) == 0)
-            return 0;   /* sortie propre (le canari de pile est vérifié ici) */
+            return 0;
 
         if (status == 0)
             printf(" Completed %s command successfully\n", command);
