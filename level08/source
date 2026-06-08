@@ -37,18 +37,11 @@ void log_wrapper(FILE *stream, char *prefix, char *user)
     char line[264];
     size_t len;
 
-    /* On commence par recopier le préfixe dans le buffer. */
     strcpy(line, prefix);
     len = strlen(line);
 
-    /*
-     * On concatène la partie utilisateur à la suite du préfixe.
-     * BUG : 'user' est passé comme chaîne de format à snprintf,
-     * au lieu de snprintf(line + len, 0xfe - len, "%s", user).
-     */
     snprintf(line + len, 0xfe - len, user);
 
-    /* Supprime un éventuel retour à la ligne. */
     line[strcspn(line, "\n")] = '\0';
 
     fprintf(stream, "LOG: %s\n", line);

