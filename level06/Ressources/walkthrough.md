@@ -32,13 +32,12 @@ Il n'y a pas de buffer overflow. L'algorithme de hachage est **déterministe et 
 
 On simule l'algorithme en Python pour un login choisi, puis on entre le login et le serial calculé dans le binaire.
 
-```python
-login = "qordoux"
-h = (ord(login[3]) ^ 0x1337) + 0x5eeded
-for c in login:
-    h += (ord(c) ^ h) % 0x539
-print(h & 0xFFFFFFFF)   # unsigned 32 bits comme en C
-# → 6233773
+Le script `serial.py` dans `Ressources/` contient l'algorithme. Pour l'utiliser, changer la variable `login` si besoin puis le lancer :
+
+```bash
+python3 Ressources/serial.py
+# Login:  qordoux
+# Serial: 6233773
 ```
 
 ## Session
