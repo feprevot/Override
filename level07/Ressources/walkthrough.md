@@ -1,5 +1,7 @@
 # Level 07 Walkthrough
 
+**Objectif :** exploiter un accès tableau hors-bornes pour écrire directement l'adresse de `system()` et `"/bin/sh"` à la place de l'adresse de retour de `main()` — les filtres sont contournables par calcul d'index.
+
 ## Vulnérabilité
 
 Le programme `level07` est un **stockage de nombres sur la pile** avec deux failles :

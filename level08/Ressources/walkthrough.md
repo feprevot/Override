@@ -1,5 +1,7 @@
 # Level 08 Walkthrough
 
+**Objectif :** abuser du binaire SUID pour lui faire lire `/home/users/level09/.pass` et copier son contenu dans un fichier accessible — on contrôle le chemin source via un lien symbolique.
+
 ## Vulnérabilité
 
 Le binaire `level08` est un utilitaire de sauvegarde **SUID** (il tourne avec les droits de level09). Il :

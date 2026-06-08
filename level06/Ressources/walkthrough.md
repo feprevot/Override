@@ -1,5 +1,7 @@
 # Level06 — Walkthrough
 
+**Objectif :** reconstruire l'algorithme de hachage du login pour calculer le serial exact attendu par `auth()` — pas de faille mémoire, on reverse l'algo et on entre le bon serial pour déclencher le shell.
+
 ## Analyse du binaire
 
 Le programme demande un **login** (chaîne) et un **serial** (entier non signé).  

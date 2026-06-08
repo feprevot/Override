@@ -1,5 +1,7 @@
 # Level01 — Walkthrough
 
+**Objectif :** exploiter un buffer overflow dans la vérification du mot de passe pour faire un ret2libc — écraser l'adresse de retour de `main` avec l'adresse de `system()` et lui passer `"/bin/sh"` en argument.
+
 ## Analyse du binaire
 
 Le programme demande un nom d'utilisateur, vérifie qu'il vaut `dat_wil`, puis demande un mot de passe. La vérification du mot de passe est volontairement piégée :

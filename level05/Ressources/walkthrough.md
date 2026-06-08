@@ -1,5 +1,7 @@
 # Level05 — Format String + GOT Overwrite
 
+**Objectif :** exploiter une format string vulnerability dans `printf(buf)` pour écraser l'entrée GOT de `exit()` avec l'adresse d'un shellcode placé en mémoire — quand `exit()` est appelé, le CPU saute dans notre shellcode.
+
 ## Vulnérabilité
 
 ```c

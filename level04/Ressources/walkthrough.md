@@ -1,5 +1,7 @@
 # Walkthrough — level04
 
+**Objectif :** exploiter un buffer overflow dans `gets()` pour injecter un shellcode custom (open/read/write, sans `execve`) qui lit directement `/home/users/level05/.pass` — le shellcode classique est bloqué par le père via ptrace.
+
 ## 1. Analyse du binaire
 
 Le programme fork un processus fils et un pere.
@@ -35,13 +37,24 @@ Program received signal SIGSEGV, Segmentation fault.
 [Switching to process 1970]
 0x41326641 in ?? ()
 
-0x41326641 == 156 octets
+
+
+Ces 4 caractères sont à la position **156** dans le pattern → EIP est écrasé 156 octets après le début du buffer.
 
 **Padding = 156 octets.**
-
+```
 ---
 
 ## 3. Trouver l'adresse du buffer
+
+On pose un breakpoint sur `gets` et on lit son premier argument. En 32 bits (convention cdecl), au moment où on entre dans une fonction la stack ressemble à :
+
+```
+esp+0 → adresse de retour  (poussée par CALL)
+esp+4 → 1er argument       (ici : le pointeur vers le buffer passé à gets)
+```
+
+`x/x $esp+4` lit donc l'adresse du buffer directement depuis la stack du fils.
 
 ```bash
 gdb ./level04
@@ -53,6 +66,8 @@ x/x $esp+4
 ```
 
 **Adresse du buffer = `0xffffd680`**
+
+On a besoin de cette adresse parce que c'est là qu'on va mettre notre shellcode. La stratégie c'est : écrire le shellcode au début du buffer, puis écraser l'adresse de retour pour qu'elle pointe vers le début de ce même buffer. Quand `main` fait `ret`, le CPU saute directement dans notre shellcode.
 
 L'adresse obtenue sous GDB est plus basse qu'en execution reelle : GDB injecte des variables d'environnement qui decalent la stack. On vise `0xffffd6a0` (+0x20) en pratique.
 

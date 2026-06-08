@@ -1,5 +1,7 @@
 # Level00 — Walkthrough
 
+**Objectif :** le binaire compare l'entier saisi à une constante hardcodée. On lit la constante dans le code désassemblé, on la convertit en décimal, et on la saisit pour obtenir un shell.
+
 ## Analyse du binaire
 
 Le binaire affiche un prompt `Password:`, lit un entier via `scanf`, puis compare cet entier à la constante `0x149c`.

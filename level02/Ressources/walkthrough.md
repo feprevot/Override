@@ -1,5 +1,7 @@
 # Walkthrough — level02
 
+**Objectif :** exploiter une format string vulnerability dans `printf(username)` pour lire `pass_file` directement depuis la stack — le binaire charge lui-même le mot de passe du niveau suivant en mémoire, il suffit de le faire fuiter.
+
 ## 1. Analyse du source
 
 Le binaire fait trois choses :

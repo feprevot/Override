@@ -1,5 +1,7 @@
 # Walkthrough — level03
 
+**Objectif :** retrouver la valeur à saisir pour que `decrypt()` produise `"Congratulations!"` — on identifie la clé XOR attendue dans le code, puis on calcule l'entier à entrer pour que `test()` la génère.
+
 ## 1. Analyse du source
 
 Le binaire demande un entier et enchaîne trois fonctions :

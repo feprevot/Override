@@ -1,5 +1,7 @@
 # Level 09 — Walkthrough
 
+**Objectif :** exploiter un buffer overflow dans `set_username()` pour écraser l'adresse de retour de `handle_msg()` et rediriger l'exécution vers `secret_backdoor()`, une fonction présente dans le binaire mais jamais appelée, qui exécute n'importe quelle commande.
+
 ## Analyse du binaire
 
 Le binaire expose une petite messagerie. Le flux d'exécution est :
