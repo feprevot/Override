@@ -48,6 +48,4 @@ level06@OverRide:~$ ./level06
 Authenticated!
 $ whoami
 level07
-$ cat /home/users/level07/.pass
-
 ```
