@@ -28,7 +28,7 @@ Le buffer `pass_file` est une variable locale de `main`, donc il est physiquemen
 
 ### Ce qu'on cherche à faire
 
-`pass_file` est sur la stack de `main`. `printf(username)` lit la stack quand le format string contient des `%lx`. On va donc lire la stack slot par slot jusqu'à tomber sur le contenu de `pass_file`.
+Le binaire lit lui-même `/home/users/level03/.pass` dans `pass_file` au démarrage. Ce buffer est stocké sur la stack de `main`. En exploitant le format string, on va **lire la stack depuis le username** pour en extraire le contenu de `pass_file` — c'est-à-dire le flag du niveau suivant, sans jamais connaître le vrai password.
 
 `%N$lx` = affiche la N-ème valeur 64 bits lue depuis la stack en hexadécimal.
 
@@ -82,7 +82,7 @@ Sortie obtenue :
 
 ---
 
-### Étape 2 — Décoder les valeurs hex
+### Étape 3 — Décoder les valeurs hex
 
 Chaque valeur est un entier 64 bits little-endian. Pour retrouver les caractères, on renverse les octets avec `.decode('hex')[::-1]` en Python 2.
 

