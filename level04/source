@@ -1,6 +1,4 @@
 /*
- * level04 — version C lisible du binaire
- *
  * Déroulé du programme :
  *   1. Le processus installe un délai (alarm de 60 s) : passé ce temps,
  *      un gestionnaire de signal exécute un syscall et termine le programme.

@@ -4,8 +4,6 @@
 #include <time.h>
 
 /*
- * Programme de verification de mot de passe numerique.
- *
  * Etapes :
  *   1. Initialisation du generateur aleatoire avec srand(time(NULL)).
  *   2. Lecture d un entier non signe saisi par l utilisateur (get_unum -> scanf("%u")).

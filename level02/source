@@ -3,8 +3,6 @@
 #include <string.h>
 
 /*
- * Prompt de login "Secure Access System v1.0".
- *
  * Etapes :
  *   1. Ouverture de /home/users/level03/.pass (autorisee car le binaire est setuid level03).
  *   2. Lecture de 41 octets dans pass_file, puis suppression du '\n' final.
