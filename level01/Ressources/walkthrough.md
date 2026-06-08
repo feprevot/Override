@@ -60,6 +60,8 @@ $1 = {<text variable, no debug info>} 0xf7e6aed0 <system>
 Adresse de la chaîne `"/bin/sh"` dans la libc :
 
 ```
+(gdb) b main
+(gdb) r
 (gdb) find __libc_start_main,+99999999,"/bin/sh"
 0xf7f897ec
 1 pattern found.
@@ -94,14 +96,3 @@ L'argument est lu à `esp+4`, pas à `esp`. Il faut donc bourrer `esp` avec 4 oc
 - `dat_wil\n` passe la vérification du nom d'utilisateur.
 - Le bloc suivant est envoyé comme mot de passe et déclenche le ret2libc.
 - `; cat` garde stdin ouvert après le payload pour pouvoir interagir avec le shell qui s'ouvre (sans ça, le shell se ferme immédiatement faute d'entrée).
-
-Une fois le shell obtenu :
-
-```
-$ cat /home/users/level02/.pass
-PwBLgNa8p8MTKW57S7zxVAQCxnCpV8JqTTs9XEBv
-```
-
-## Résumé
-
-Buffer overflow de 100 octets dans un buffer de 64 sur la pile. Comme la condition de victoire du mot de passe est inatteignable, on détourne l'exécution via l'overflow. Pas de NX bypass ni d'ASLR à gérer ici : un ret2libc classique avec `system("/bin/sh")` suffit. Les 4 octets `"osef"` servent à aligner `/bin/sh` sur `esp+4`, position où `system()` lit son argument.
