@@ -67,8 +67,9 @@ gdb -q ./level07
 Dans gdb :
 
 ```gdb
-# Breakpoint à l'adresse juste après "sub esp, 0x1d0"
-# (0x0804874d pour ce binaire, cherche la première instruction APRÈS le "sub esp")
+# Breakpoint juste après l'installation du canari (mov %eax,0x1cc(%esp)).
+# N'importe quelle adresse après "sub esp,0x1d0" (0x804872c) convient : esp/ebp
+# ne bougent plus à partir de là. On prend 0x0804874d (le "xor %eax,%eax").
 b *0x0804874d
 run
 ```
