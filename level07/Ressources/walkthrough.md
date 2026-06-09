@@ -91,6 +91,25 @@ p/d (($ebp+4)-($esp+0x24))/4
 
 **Résultat attendu** : `$1 = 114`
 
+### L'image mentale
+
+```
+        ┌──────────────────┐
+esp ──→ │  (sommet pile)   │
+        │       ...        │
+        │  data[0]         │ ← esp+0x24   ┐
+        │  data[1]         │              │
+        │  data[2]         │              │  distance = N octets
+        │   ...            │              │  index = N / 4
+        │  RETURN ADDRESS  │ ← ebp+4      ┘
+ebp ──→ │  saved ebp       │
+        └──────────────────┘
+```
+
+Tu mesures la distance entre `data[0]` (`esp+0x24`) et la return address
+(`ebp+4`) **en octets**, puis tu la divises en cases de 4 octets (1 `int`) pour
+obtenir le numéro d'index.
+
 ### Vérification (optionnel)
 
 Pour vérifier que tu as bien trouvé l'adresse de retour, tu peux lire cet index :
@@ -146,8 +165,9 @@ p system
 # Cherche la chaîne "/bin/sh" dans libc
 find &system, +9999999, "/bin/sh"
 
-# Convertis l'adresse trouvée en décimal (ex. 0xf7f897ec)
-p/u 0xf7f897ec
+# Convertis les DEUX adresses en décimal (c'est ce qu'attend le prompt store)
+p/u 0xf7e6aed0    # system()  -> 4159090384
+p/u 0xf7f897ec    # "/bin/sh" -> 4160264172
 ```
 
 **Résultats attendus** :
@@ -177,6 +197,8 @@ Quand tu accèdes à `data[index]`, l'adresse mémoire est :
 ```
 adresse = base_de_data + (index × 4)
 ```
+
+> **`base_de_data` = l'adresse de `data[0]`**
 
 Les 4 octets, c'est la taille d'un `int`.
 
