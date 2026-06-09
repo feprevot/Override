@@ -19,8 +19,8 @@
 int main(void)
 {
     char    username[100];
-    char    pass_file[48];
     char    password[112];
+    char    pass_file[48];
     int     bytes_read;
     FILE    *fp;
 

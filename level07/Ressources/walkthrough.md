@@ -138,8 +138,9 @@ Toujours dans `gdb` :
 
 ```gdb
 # Affiche l'adresse de system() 
-p/x (void *)system
-p/u (unsigned int)(void *)system
+b main 
+r
+p system
 
 # Cherche la chaîne "/bin/sh" dans libc
 find &system, +9999999, "/bin/sh"

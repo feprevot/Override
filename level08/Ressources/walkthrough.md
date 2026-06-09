@@ -10,8 +10,6 @@ Le binaire `level08` est un utilitaire de sauvegarde **SUID** (il tourne avec le
 
 La faille : on peut lui faire lire n'importe quel fichier accessible à level09, y compris `/home/users/level09/.pass`. Le tout est de contrôler où la copie est écrite.
 
-> **Note** : il existe aussi une faille format string ligne 52 (`snprintf(line + len, 0xfe - len, user)` — `user` est passé comme format au lieu de `"%s"`), mais elle n'est pas nécessaire pour l'exploit.
-
 ---
 
 ## Étape 1 : Comprendre le problème de destination
